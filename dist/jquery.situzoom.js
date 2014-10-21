@@ -1,15 +1,6 @@
-/*
- * situZoom
- *
- *
- * Copyright (c) 2014 John McCormick
- * Licensed under the MIT license.
- *
- * Special thanks to Examiner.com for supporting this project.
- *
- * You must provide a valid DOCTYPE declaration (e.g., <!DOCTYPE HTML>) for this script to work.
- */
-
+/*! situzoom - v0.1.0 - 2014-10-18
+* https://github.com/neardark/situzoom
+* Copyright (c) 2014 John McCormick; Licensed MIT */
 ;(function ($, window, document, undefined) {
   "use strict";
 
@@ -27,33 +18,22 @@
         showTitles: true,
         speed: '0.25s',
         viewportPadding: 0,
-        zIndex: 99999999999,
+        zIndex: 99999999,
         zoomedClass: 'zoomified'
       },
       settings = $.extend({}, defaults, options),
       $thumbnail = {},
       $enlargement = {},
       enlargedRatio,
-      instanceNumber = 0,
       ratio,
       viewport = {},
-      direction = {},
-      instances = [];
-
-    this.closeAll = closeAll;
-    this.close = close;
+      direction = {};
 
     // Iterate over all activated thumbnails.
     return this.each( function () {
-      instances.push(this);
-      $(this).attr('data-index', instanceNumber);
-      instanceNumber++;
-
       if (!$(this).is('img')) {
         return;
       }
-
-      // Ensure the image thumbnail has fully loaded.
       $(this).one('load', function (event) {
         $(event.currentTarget).click(buildEnlargement);
       }).each(checkload);
@@ -62,7 +42,7 @@
     function buildEnlargement(event) {
       event.preventDefault();
       if (typeof settings.onZoomStarted === 'function') {
-        settings.onZoomStarted.call(event);
+        settings.onZoomStarted.call(this);
       }
       $thumbnail = $(event.currentTarget);
 
@@ -133,11 +113,13 @@
       $transitionedEnlargement.unbind("transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd");
 
       if (typeof settings.onZoomFinished === 'function') {
-        settings.onZoomZoomed.call(event);
+        settings.onZoomZoomed.call(this);
       }
 
       // If a title attribute is present and showTitles is flagged, then show the title.
       if ($enlargement.attr('title') && settings.showTitles) {
+        console.log($enlargement);
+        console.log(enlargedRatio);
 
         $enlargement.parent('figure').append('<figcaption class="' + settings.captionClass + '">' + $enlargement.attr('title') + '</figcaption>');
         $enlargement.parent('figure').find('figcaption').css({
@@ -154,32 +136,8 @@
       }
     }
 
-    /**
-     * Close an indexed zoomable item.
-     *
-     * @param index
-     */
-    function close(index) {
-      var $element = $('.zoomable[data-index=' + index + ']');
-      closeEnlargement($element);
-    }
-
-    /**
-     * Close all Zoomable items
-     */
-    function closeAll() {
-      $.each(instances, function (index, element) {
-        closeEnlargement(element);
-      });
-    }
-
-
-    function closeEnlargement(element) {
-      var $element = element.currentTarget ? $('.zoomable[data-index=' + $(element.currentTarget).attr('data-index') + ']') : $(element);
-      var elementIndex = $element.attr('data-index');
-      var $closedEnlargement = $('.enlargement-zoomed[data-index=' + elementIndex + ']');
-      ratio = $closedEnlargement.data('ratio');
-
+    function closeEnlargement(event) {
+      var $closedEnlargement = $(event.currentTarget);
       $closedEnlargement.find('figcaption').remove();
       $closedEnlargement.css({
         '-ms-transform':  'scale(' + ratio + ')',
@@ -188,7 +146,7 @@
       });
 
       if (typeof settings.onZoomCloseStarted === 'function') {
-        settings.onZoomCloseStarted.call(event);
+        settings.onZoomCloseStarted.call(this);
       }
 
       $closedEnlargement.bind("transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd", function() {
@@ -245,9 +203,6 @@
       $enlargement.parent('figure').addClass('enlargement-zoomed');
       $enlargement.parent('figure').attr('data-y-direction', direction.y);
       $enlargement.parent('figure').attr('data-x-direction', direction.x);
-      $enlargement.parent('figure').attr('data-ratio', ratio);
-      $enlargement.parent('figure').attr('data-index', $thumbnail.attr('data-index'));
-
       $('body').prepend($enlargement.parent('figure'));
       $enlargement.focus(); // Allows transition to activate on item.
     }
@@ -265,11 +220,9 @@
     }
 
     function checkload(event) {
-      if (this.complete) {
-        $(this).load();
+      if (event.complete) {
+        $(event).load();
       }
     }
   };
-
-
 })(jQuery, this, this.document);
